@@ -1,8 +1,40 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Edit3, Users, MessageSquare, PencilLine } from 'lucide-react';
+import { Edit3, Users, MessageSquare, PencilLine, Sparkles, Loader2 } from 'lucide-react';
 
 export function Chapter4() {
+  const [keywords, setKeywords] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [reflection, setReflection] = useState('');
+
+  const handleGenerateReflection = async () => {
+    if (!keywords.trim()) {
+      alert("키워드를 입력해주세요.");
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const response = await fetch('/api/generate-reflection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keywords })
+      });
+
+      if (!response.ok) {
+        throw new Error('소감문 생성 실패');
+      }
+
+      const data = await response.json();
+      setReflection(data.reflection);
+    } catch (error) {
+      console.error(error);
+      alert('오류가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <motion.section 
       id="ch4" 
@@ -74,7 +106,7 @@ export function Chapter4() {
         </div>
 
         {/* 4.2 토론 및 성찰 */}
-        <div>
+        <div className="mb-10">
           <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2 border-t border-slate-200 pt-8">
             <span className="text-emerald-600">4.2</span> 2. 토론 및 성찰 질문 리스트
           </h3>
@@ -99,6 +131,62 @@ export function Chapter4() {
             ))}
           </div>
         </div>
+
+        {/* 4.3 AI 소감문 작성 */}
+        <div>
+          <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2 border-t border-slate-200 pt-8">
+            <span className="text-emerald-600">4.3</span> 3. AI 소감문 작성
+          </h3>
+          <p className="text-slate-600 mb-6 text-sm">
+            이번 단원을 통해 배운 점을 바탕으로 키워드를 입력하면, AI가 자동으로 소감문의 초안을 작성합니다.
+          </p>
+          
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 shadow-sm">
+            <div className="flex flex-col md:flex-row gap-4 mb-4">
+              <input
+                type="text"
+                placeholder="예: 평화적 해결, 안용복, 역사적 진실, 동해"
+                value={keywords}
+                onChange={(e) => setKeywords(e.target.value)}
+                className="flex-1 bg-white border border-slate-300 rounded-lg px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm"
+              />
+              <button
+                onClick={handleGenerateReflection}
+                disabled={isGenerating}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:bg-indigo-400 min-w-[160px]"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="animate-spin" size={18} />
+                    생성 중...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={18} />
+                    소감문 작성하기
+                  </>
+                )}
+              </button>
+            </div>
+            
+            {reflection && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-6 bg-white p-6 rounded-lg border border-indigo-100 shadow-inner"
+              >
+                <div className="flex items-center gap-2 mb-4 text-indigo-700 font-bold border-b border-indigo-50 pb-2">
+                  <Sparkles size={18} />
+                  AI가 작성한 소감문
+                </div>
+                <div className="text-slate-700 text-sm leading-loose whitespace-pre-wrap">
+                  {reflection}
+                </div>
+              </motion.div>
+            )}
+          </div>
+        </div>
+
       </div>
     </motion.section>
   );
